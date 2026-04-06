@@ -1,6 +1,6 @@
 --- Test todo
 vim.api.nvim_create_user_command("Todo", function()
-	vim.api.nvim_create_buf(false, true)
+	require("todo").view_todos()
 end, {})
 
 --- Add todo
