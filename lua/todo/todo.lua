@@ -63,7 +63,12 @@ local function view_todos(opts)
 	end
 end
 
+local function complete_todo(opts)
+
+end
+
 M.add_todo = add_todo
 M.view_todos = view_todos
+M.complete_todo = complete_todo
 
 return M
