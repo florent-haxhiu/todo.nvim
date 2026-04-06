@@ -20,7 +20,7 @@ local function write_to_file(todo)
 		lines = {}
 	end
 	table.insert(lines, todo)
-	vim.fn.writefile({vim.fn.json_encode(lines)}, path)
+	vim.fn.writefile({ vim.fn.json_encode(lines) }, path)
 end
 
 ---@class Todo
@@ -48,23 +48,41 @@ function Todo:__tostring()
 	return string.format("[%s] %s", self.done and "x" or " ", self.title)
 end
 
+---@return table<string>
+local function get_lines_in_table(lines)
+	---@type table<string>
+	local show_lines_on_win = {}
+
+	for _, line in pairs(lines) do
+		table.insert(show_lines_on_win, string.format("[%s] %s", line.done and "x" or " ", line.title))
+	end
+	return show_lines_on_win
+end
+
+---@param lines table<string>
+local function open_win(lines)
+	local buf = vim.api.nvim_create_buf(false, true)
+	vim.api.nvim_buf_set_option(buf, "buftype", "nofile")
+	vim.api.nvim_open_win(buf, true,
+		{ relative = "win", row = 25, col = 25, width = 30, height = 30, title = "Todo", border = { "╔", "═", "╗", "║", "╝", "═", "╚", "║" } })
+	vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+	return buf
+end
+
 local function add_todo(opts)
 	---@type Todo
 	local todo = Todo.new(opts)
-	print(tostring(todo))
 	write_to_file(todo)
 end
 
-local function view_todos(opts)
-	---@type table<[Todo]> 
+local function view_todos()
+	---@type table<[Todo]>
 	local lines = vim.fn.json_decode(vim.fn.readfile(data_path .. "/todos.json"))
-	for i, line in pairs(lines) do
-		print(string.format("[%s] %s", line.done and "x" or " ", line.title))
-	end
-end
 
-local function complete_todo(opts)
+	local show_lines_on_win = get_lines_in_table(lines)
 
+	open_win(show_lines_on_win)
+	return show_lines_on_win
 end
 
 M.add_todo = add_todo
