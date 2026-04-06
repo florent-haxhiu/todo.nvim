@@ -43,7 +43,6 @@ end
 
 ---@param title string
 local function add_todo(title)
-	---@type Todo
 	write_to_file({ title = title, done = false, tags = {} })
 end
 
