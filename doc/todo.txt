@@ -1,0 +1,58 @@
+*todo.txt*	A simple project-local todo manager for Neovim
+
+==============================================================================
+CONTENTS                                                        *todo-contents*
+
+  1. Introduction ............... |todo-introduction|
+  2. Setup ...................... |todo-setup|
+  3. Commands ................... |todo-commands|
+  4. Keymaps .................... |todo-keymaps|
+  5. Storage .................... |todo-storage|
+
+==============================================================================
+1. INTRODUCTION                                             *todo-introduction*
+
+todo.nvim is a simple todo manager for Neovim. It opens a floating window
+where you can add, complete, and remove todos. Todos are stored per project
+in a `todos.json` file at the git root, or the current working directory if
+not in a git repository.
+
+==============================================================================
+2. SETUP                                                        *todo-setup*
+
+Call setup in your config:
+
+>lua
+    require("todo").setup()
+<
+
+==============================================================================
+3. COMMANDS                                                   *todo-commands*
+
+:Todo                                                                  *:Todo*
+    Opens the todo floating window.
+
+==============================================================================
+4. KEYMAPS                                                     *todo-keymaps*
+
+These keymaps are active only inside the todo window.
+
+  `a`       Prompt to add a new todo.
+  `<CR>`    Mark the todo under the cursor as complete.
+  `d`       Remove the todo under the cursor.
+
+==============================================================================
+5. STORAGE                                                     *todo-storage*
+
+Todos are stored in `todos.json` at the root of your git repository, making
+them project-local. You can commit this file to version control to share
+todos with your team.
+
+Each todo has the following fields:
+
+  - `title`  The todo text.
+  - `done`   Whether the todo is completed.
+  - `tags`   A list of tags (reserved for future use).
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:
