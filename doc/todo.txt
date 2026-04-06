@@ -1,4 +1,10 @@
-*todo.txt*	A simple project-local todo manager for Neovim
+*todo.nvim* Todo
+*todo.nvim*
+
+Author:   Florent Haxhiu <lewis6991@gmail.com>
+Version:  v1.0.0
+Homepage: <https://github.com/florent-haxhiu/todo.nvim>
+License:  MIT license
 
 ==============================================================================
 CONTENTS                                                        *todo-contents*
