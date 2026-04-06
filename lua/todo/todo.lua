@@ -1,5 +1,10 @@
 local M = {}
 
+---@class Todo
+---@field title string
+---@field done boolean
+---@field tags table
+
 local data_path
 local root = vim.fn.systemlist("git rev-parse --show-toplevel")[1]
 if vim.v.shell_error == 0 then
@@ -8,44 +13,21 @@ else
 	data_path = vim.fn.getcwd()
 end
 
+local path = data_path .. "/todos.json"
+
+local function init_file()
+	if vim.fn.filereadable(path) == 1 then return end
+	vim.fn.writefile({ vim.fn.json_encode({}) }, path)
+end
+
+init_file()
+
 ---@param todo Todo
 local function write_to_file(todo)
 	---@type table<Todo>
-	local lines
-
-	local path = data_path .. "/todos.json"
-	if vim.fn.filereadable(path) == 1 then
-		lines = vim.fn.json_decode(vim.fn.readfile(path))
-	else
-		lines = {}
-	end
+	local lines = vim.fn.json_decode(vim.fn.readfile(path))
 	table.insert(lines, todo)
 	vim.fn.writefile({ vim.fn.json_encode(lines) }, path)
-end
-
----@class Todo
----@field id integer
----@field title string
----@field done boolean
----@field tags table
-local Todo = {}
-Todo.__index = Todo
-
-function Todo.new(opts)
-	return setmetatable({
-		id = opts.id,
-		title = opts.title,
-		done = opts.done or false,
-		tags = opts.tags or {},
-	}, Todo)
-end
-
-function Todo:complete()
-	self.done = true
-end
-
-function Todo:__tostring()
-	return string.format("[%s] %s", self.done and "x" or " ", self.title)
 end
 
 ---@return table<string>
@@ -59,34 +41,69 @@ local function get_lines_in_table(lines)
 	return show_lines_on_win
 end
 
----@param lines table<string>
-local function open_win(lines)
+---@param title string
+local function add_todo(title)
+	---@type Todo
+	write_to_file({ title = title, done = false, tags = {} })
+end
+
+local function read_todos()
+	---@type table<[Todo]>
+	return vim.fn.json_decode(vim.fn.readfile(path))
+end
+
+local function complete_todo(row)
+	local lines = read_todos()
+	lines[row].done = true
+	vim.fn.writefile({ vim.fn.json_encode(lines) }, path)
+end
+
+local function remove_todo(row)
+	local lines = read_todos()
+	table.remove(lines, row)
+	vim.fn.writefile({ vim.fn.json_encode(lines) }, path)
+end
+
+local function open_win()
 	local buf = vim.api.nvim_create_buf(false, true)
+	--- Make sure that neovim doesn't save the file
 	vim.api.nvim_buf_set_option(buf, "buftype", "nofile")
+
+	--- Get a sensible width and height
+	local width = math.floor(vim.o.columns * 0.4)
+	local height = math.floor(vim.o.lines * 0.4)
+	local win_row = (vim.o.lines - height) / 2
+	local win_col = (vim.o.columns - width) / 2
+
+	--- Open the window with the settings for the floating window
 	vim.api.nvim_open_win(buf, true,
-		{ relative = "win", row = 25, col = 25, width = 30, height = 30, title = "Todo", border = { "╔", "═", "╗", "║", "╝", "═", "╚", "║" } })
-	vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+		{ relative = "editor", row = win_row, col = win_col, height = height, width = width, title = "Todo", border = { "╔", "═", "╗", "║", "╝", "═", "╚", "║" } })
+	--- Set the lines in the window
+	vim.api.nvim_buf_set_lines(buf, 0, -1, false, get_lines_in_table(read_todos()))
+
+	vim.keymap.set("n", "<CR>", function()
+		local row = vim.api.nvim_win_get_cursor(0)
+		complete_todo(row[1])
+		vim.api.nvim_buf_set_lines(buf, 0, -1, false, get_lines_in_table(read_todos()))
+	end, { buffer = buf })
+
+	vim.keymap.set("n", "a", function()
+		local title = vim.fn.input("Todo: ")
+		if title ~= "" then
+			add_todo(title)
+			vim.api.nvim_buf_set_lines(buf, 0, -1, false, get_lines_in_table(read_todos()))
+		end
+	end, { buffer = buf })
+
+	vim.keymap.set("n", "d", function()
+		local row = vim.api.nvim_win_get_cursor(0)
+		remove_todo(row[1])
+		vim.api.nvim_buf_set_lines(buf, 0, -1, false, get_lines_in_table(read_todos()))
+	end, { buffer = buf, nowait = true })
+
 	return buf
 end
 
-local function add_todo(opts)
-	---@type Todo
-	local todo = Todo.new(opts)
-	write_to_file(todo)
-end
-
-local function view_todos()
-	---@type table<[Todo]>
-	local lines = vim.fn.json_decode(vim.fn.readfile(data_path .. "/todos.json"))
-
-	local show_lines_on_win = get_lines_in_table(lines)
-
-	open_win(show_lines_on_win)
-	return show_lines_on_win
-end
-
-M.add_todo = add_todo
-M.view_todos = view_todos
-M.complete_todo = complete_todo
+M.todo = open_win
 
 return M
