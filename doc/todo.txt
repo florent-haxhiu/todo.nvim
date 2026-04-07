@@ -1,7 +1,7 @@
 *todo.nvim* Todo
 *todo.nvim*
 
-Author:   Florent Haxhiu <lewis6991@gmail.com>
+Author:   Florent Haxhiu <florenthaxhiu03@gmail.com>
 Version:  v1.0.0
 Homepage: <https://github.com/florent-haxhiu/todo.nvim>
 License:  MIT license
